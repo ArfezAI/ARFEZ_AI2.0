@@ -55,21 +55,21 @@ def api_endpoint(f):
     return wrapper
 
 CONN_STR_PRIMARY = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"
+    "DRIVER={OC Driver 17 for SQL Server};"
     "SERVER=DESKTOP-L7INTLS,1433;"
     "DATABASE=ARFEZ;"
     "UID=sa;"
-    "PWD=2209;"
+    "PWD=****;"
     "TrustServerCertificate=yes;"
     "Timeout=10;"
 )
 
 CONN_STR_FALLBACK = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"
+    "DRIVER={OC Driver 17 for SQL Server};"
     "SERVER=DESKTOP-L7INTLS\\SQLEXPRESS;"
     "DATABASE=ARFEZ;"
     "UID=sa;"
-    "PWD=2209;"
+    "PWD=****;"
     "TrustServerCertificate=yes;"
     "Timeout=10;"
 )
