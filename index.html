@@ -224,8 +224,22 @@ Veriler yükleniyor...
 </div>
 <div style="overflow-x:auto">
 <table class="stock-table" id="stockTable">
-<thead><tr><th>Sembol</th><th>Sirket</th><th>Sektor</th><th>ARFEZ</th><th>Final</th><th>Sinyal</th><th>Hedef</th><th>Stop</th><th>R/R</th></tr></thead>
-<tbody id="stockBody"><tr><td colspan="9" style="text-align:center;color:var(--text-3)">Yukleniyor...</td></tr></tbody>
+<thead>
+<tr>
+    <th>Sembol</th>
+    <th>Şirket</th>
+    <th>Sektör</th>
+    <th>ARFEZ</th>
+    <th>Final</th>
+    <th>Sinyal</th>
+    <th>Güncel Fiyat</th>
+    <th>Adil Değer</th>
+    <th>Hedef</th>
+    <th>Stop</th>
+    <th>R/R</th>
+</tr>
+</thead>
+<tbody id="stockBody"><tr><td colspan="11" style="text-align:center;color:var(--text-3)">Yukleniyor...</td></tr></tbody>
 </table>
 </div>
 </div>
@@ -378,6 +392,7 @@ Veriler yükleniyor...
 <div style="padding:12px;background:var(--bg-0);border-radius:8px">
 <div style="font-size:13px;font-weight:700;margin-bottom:4px">ELF — Tuketici Guzellik</div>
 <div style="font-size:12px;color:var(--text-3)">2/10 fon artirim • 6/10 notr • Dusuk kurumsal ilgi</div>
+</div>
 </div>
 </div>
 </div>
@@ -729,16 +744,28 @@ async function loadStocks() {
             renderStocks(allStocks);
             toast("Hisseler cache'den yuklendi", "info", 3000);
         } else {
-            tbody.innerHTML = '<tr><td colspan="9" class="empty-state">API baglanti hatasi — veri yok</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" class="empty-state">API baglanti hatasi — veri yok</td></tr>';
         }
         setApiStatus(false);
     }
 }
 
+function formatPrice(value) {
+    if (value === null || value === undefined ||
+        !Number.isFinite(Number(value))) {
+        return "--";
+    }
+
+    return "$" + Number(value).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
 function renderStocks(data) {
     const tbody = document.getElementById("stockBody");
     if(!data || !data.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Veri bulunamadi</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="empty-state">Veri bulunamadi</td></tr>';
         return;
     }
     tbody.innerHTML = data.map(function(s) {
@@ -752,6 +779,8 @@ function renderStocks(data) {
             '<td><span class="score-pill ' + pillClass + '">' + (s.arfez_score != null ? s.arfez_score : "--") + "</span></td>" +
             '<td><span class="score-pill ' + pillClass + '">' + (s.final_score != null ? s.final_score : "--") + "</span></td>" +
             '<td class="' + signalClass + '">' + (s.signal || "BEKLE") + "</td>" +
+            "<td>" + formatPrice(s.current_price) + "</td>" +
+            "<td>" + formatPrice(s.fair_value) + "</td>" +
             "<td>" + (s.target != null ? s.target : "--") + "</td>" +
             "<td>" + (s.stop != null ? s.stop : "--") + "</td>" +
             "<td>" + (s.expected_return != null ? s.expected_return : (s.rr != null ? s.rr : "--")) + "</td>" +
@@ -1016,23 +1045,9 @@ document.addEventListener("keydown", function(e) {
     }
     if(e.key === "r" || e.key === "R") {
         e.preventDefault();
-        toast("Veriler yenileniyor...", "info", 2000);
+        toast("Tum veriler yenileniyor...", "info", 2000);
         checkApiHealth();
-        loadScores();
-        loadMacro();
-        const active = document.querySelector(".section.active");
-        if(active) {
-            const id = active.id;
-            if(id === "stocks") loadStocks();
-            if(id === "watchlist") loadWatchlist();
-            if(id === "elite") loadEliteFunds();
-            if(id === "backtest") loadBacktest();
-            if(id === "memory") loadMemoryStats();
-            if(id === "knowledge") loadKnowledgeGraph();
-            if(id === "pipeline") loadPipeline();
-            if(id === "postmortem") loadPostmortem();
-            if(id === "weekly") loadWeeklySummary();
-        }
+        loadAllData();
     }
 });
 
@@ -1182,14 +1197,37 @@ async function loadWeeklySummary() {
 function refreshWeekly() {
     checkApiHealth();
     loadWeeklySummary();
+    loadPostmortem();
 }
 
-function init() {
-    checkApiHealth();
+// === YENI: Tum verileri tek cagride yenile ===
+function loadAllData() {
     loadScores();
     loadMacro();
-    setInterval(function(){ loadScores(); loadMacro(); }, 15000);
-    setInterval(function(){
+    loadStocks();
+    loadWatchlist();
+    loadEliteFunds();
+    loadBacktest();
+    loadMemoryStats();
+    loadKnowledgeGraph();
+    loadPipeline();
+    loadPostmortem();
+    loadWeeklySummary();
+}
+
+// === Sadelestirilmis init ===
+function init() {
+    checkApiHealth();
+    loadAllData();
+
+    // Skorlar ve makro 15 saniyede bir
+    setInterval(function() {
+        loadScores();
+        loadMacro();
+    }, 15000);
+
+    // Diger tum veriler 30 saniyede bir
+    setInterval(function() {
         loadWatchlist();
         loadEliteFunds();
         loadBacktest();
@@ -1199,7 +1237,6 @@ function init() {
         loadPostmortem();
         loadWeeklySummary();
     }, 30000);
-    loadWeeklySummary();
 }
 init();
 </script>
